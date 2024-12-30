@@ -11,6 +11,12 @@ import {
   clearAccessCookie,
   clearRefreshCookie,
 } from "./server/lib/cookie.js";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyAccessToken,
+  verifyRefreshToken,
+} from "./server/lib/jwt.js";
 
 // initial prisma client
 const prisma = new PrismaClient();
@@ -35,6 +41,12 @@ const remixHandler = createRequestHandler({
       refreshCookie,
       clearAccessCookie,
       clearRefreshCookie,
+
+      // jawir token configuration
+      generateAccessToken,
+      generateRefreshToken,
+      verifyAccessToken,
+      verifyRefreshToken,
     };
   },
   build: viteDevServer

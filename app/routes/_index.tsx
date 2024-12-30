@@ -4,17 +4,6 @@ import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { useSocket } from "~/context";
 
-import {
-  accessCookie,
-  clearAccessCookie,
-  clearRefreshCookie,
-  refreshCookie,
-} from "~/lib/cookie";
-import {
-  generateAccessToken,
-  verifyAccessToken,
-  verifyRefreshToken,
-} from "~/lib/jwt";
 import { isRefreshTokenAccessable } from "~/lib/utils";
 import { CustomLoaderFunctionArgs } from "~/types";
 
@@ -22,7 +11,16 @@ export const loader = async ({
   request,
   context,
 }: CustomLoaderFunctionArgs) => {
-  const { prisma } = context;
+  const {
+    prisma,
+    verifyAccessToken,
+    accessCookie,
+    verifyRefreshToken,
+    refreshCookie,
+    clearAccessCookie,
+    clearRefreshCookie,
+    generateAccessToken,
+  } = context;
 
   const getAllCookie = request.headers.get("Cookie");
 

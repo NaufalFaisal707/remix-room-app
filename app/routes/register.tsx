@@ -10,15 +10,19 @@ import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 
-import { accessCookie, refreshCookie } from "~/lib/cookie";
-import { generateAccessToken, generateRefreshToken } from "~/lib/jwt";
 import { CustomActionFunctionArgs } from "~/types";
 
 export const action = async ({
   request,
   context,
 }: CustomActionFunctionArgs) => {
-  const { prisma } = context;
+  const {
+    prisma,
+    generateAccessToken,
+    generateRefreshToken,
+    accessCookie,
+    refreshCookie,
+  } = context;
 
   const { username, password, full_name } = Object.fromEntries(
     await request.formData()

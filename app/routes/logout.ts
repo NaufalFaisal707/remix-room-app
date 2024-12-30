@@ -1,18 +1,18 @@
 import { redirect } from "@remix-run/node";
 
-import {
-  clearAccessCookie,
-  clearRefreshCookie,
-  refreshCookie,
-} from "~/lib/cookie";
-import { verifyRefreshToken } from "~/lib/jwt";
 import { CustomActionFunctionArgs } from "~/types";
 
 export const action = async ({
   request,
   context,
 }: CustomActionFunctionArgs) => {
-  const { prisma } = context;
+  const {
+    prisma,
+    verifyRefreshToken,
+    refreshCookie,
+    clearAccessCookie,
+    clearRefreshCookie,
+  } = context;
 
   const verifyedRefreshToken = verifyRefreshToken(
     await refreshCookie.parse(request.headers.get("Cookie"))

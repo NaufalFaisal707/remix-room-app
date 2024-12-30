@@ -1,5 +1,13 @@
-import { sign, verify } from "jsonwebtoken";
-import { process } from "node";
+import jwt from "jsonwebtoken";
+
+const { sign, verify } = jwt;
+
+let process;
+if (typeof window === "undefined") {
+  process = global.process;
+} else {
+  process = { env: {} };
+}
 
 function getAccessSecret() {
   if (

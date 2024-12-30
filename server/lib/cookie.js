@@ -1,5 +1,11 @@
 import { createCookie } from "@remix-run/node";
-import { process } from "node";
+
+let process;
+if (typeof window === "undefined") {
+  process = global.process;
+} else {
+  process = { env: {} };
+}
 
 const accessCookieName = "__access";
 const refreshCookieName = "__refresh";
