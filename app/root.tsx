@@ -8,6 +8,9 @@ import {
 import type { LinksFunction } from "@remix-run/node";
 
 import "./tailwind.css";
+import { useEffect, useState } from "react";
+import { io, Socket } from "socket.io-client";
+import { SocketProvider } from "./context";
 
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -41,5 +44,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  const [socket, setSocket] = useState<Socket>();
+
+  useEffect(() => {
+    const socket = io({ autoConnect: false });
+    setSocket(socket);
+    return () => {
+      socket.close();
+    };
+  }, []);
+
+  return (
+    <SocketProvider socket={socket}>
+      <Outlet />
+    </SocketProvider>
+  );
 }
