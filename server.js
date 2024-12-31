@@ -17,6 +17,7 @@ import {
   verifyAccessToken,
   verifyRefreshToken,
 } from "./server/lib/jwt.js";
+import { isRefreshTokenAccessable } from "./server/lib/utils.js";
 
 // initial prisma client
 const prisma = new PrismaClient();
@@ -88,10 +89,98 @@ function clientConnection(socket) {
   });
 }
 
+io.engine.use(async (req, res, next) => {
+  const getAllCookie = req.headers.cookie;
+
+  const verifiyedAccessCookie = verifyAccessToken(
+    await accessCookie.parse(getAllCookie)
+  );
+
+  if (verifiyedAccessCookie) {
+    req.user_id = verifiyedAccessCookie.value;
+    next();
+    return;
+  }
+
+  const verifiyedRefreshCookie = verifyRefreshToken(
+    await refreshCookie.parse(getAllCookie)
+  );
+
+  if (verifiyedRefreshCookie) {
+    const findUniqueUser = await prisma.user.findUnique({
+      where: {
+        id: verifiyedRefreshCookie.value,
+      },
+      select: {
+        id: true,
+        full_name: true,
+        created_at: true,
+        logout_at: true,
+      },
+    });
+
+    if (!findUniqueUser) {
+      throw Response.json(null, {
+        status: 404,
+        headers: [
+          ["Set-Cookie", await clearAccessCookie.serialize("")],
+          ["Set-Cookie", await clearRefreshCookie.serialize("")],
+        ],
+      });
+    }
+
+    if (
+      findUniqueUser?.logout_at &&
+      isRefreshTokenAccessable(
+        verifiyedRefreshCookie.iat,
+        findUniqueUser.logout_at
+      )
+    ) {
+      res.statusCode = 401;
+      res.setHeader("Set-Cookie", [
+        await clearAccessCookie.serialize(""),
+        await clearRefreshCookie.serialize(""),
+      ]);
+      res.end();
+    }
+
+    const gac = generateAccessToken(verifiyedRefreshCookie.value);
+
+    return Response.json(null, {
+      headers: {
+        "Set-Cookie": await accessCookie.serialize(gac),
+      },
+    });
+  }
+
+  res.statusCode = 401;
+  res.setHeader("Set-Cookie", [
+    await clearAccessCookie.serialize(""),
+    await clearRefreshCookie.serialize(""),
+  ]);
+  res.end();
+});
+
 // handle socket.io request
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
+  const user = socket.request.user_id;
+
+  const findUniqueUser = await prisma.user.findUnique({
+    where: {
+      id: user,
+    },
+    select: {
+      id: true,
+      full_name: true,
+      created_at: true,
+      logout_at: true,
+    },
+  });
+
   clientConnection(socket);
-  console.log(socket.handshake.headers);
+
+  socket.emit("getMe", findUniqueUser);
+  // console.log(socket.handshake.headers.cookie);
 });
 
 // handle SSR requests

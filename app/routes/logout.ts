@@ -1,5 +1,4 @@
 import { redirect } from "@remix-run/node";
-
 import { CustomActionFunctionArgs } from "~/types";
 
 export const action = async ({
