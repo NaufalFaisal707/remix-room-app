@@ -1,4 +1,4 @@
-import { redirect } from "@remix-run/node";
+import { redirect, redirectDocument } from "@remix-run/node";
 import { CustomActionFunctionArgs } from "~/types";
 
 export const action = async ({
@@ -18,7 +18,7 @@ export const action = async ({
   ) as unknown as { value: string };
 
   if (!verifyedRefreshToken) {
-    return redirect("/");
+    return redirectDocument("/");
   }
 
   await prisma.user.update({
@@ -30,7 +30,7 @@ export const action = async ({
     },
   });
 
-  return redirect("/", {
+  return redirectDocument("/", {
     headers: [
       ["Set-Cookie", await clearAccessCookie.serialize("")],
       ["Set-Cookie", await clearRefreshCookie.serialize("")],
