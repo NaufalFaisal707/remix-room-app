@@ -24,7 +24,7 @@ export const action = async ({
   } = context;
 
   const { username, password, full_name } = Object.fromEntries(
-    await request.formData()
+    await request.formData(),
   ) as {
     full_name: string;
     username: string;
@@ -69,7 +69,7 @@ const RegisterTemplate = ({
   error?: { title: string; message: string };
 }) => {
   return (
-    <div className="grid place-content-center h-svh gap-y-4">
+    <div className="grid h-svh place-content-center gap-y-4">
       {error && (
         <Alert variant="destructive">
           <AlertTitle>{error.title}</AlertTitle>
@@ -77,7 +77,7 @@ const RegisterTemplate = ({
         </Alert>
       )}
 
-      <div className="border p-4 rounded-md space-y-4">
+      <div className="space-y-4 rounded-md border p-4">
         <h1 className="text-lg">Silahkan register</h1>
         <Form method="POST" className="space-y-4">
           <Input
@@ -85,15 +85,24 @@ const RegisterTemplate = ({
             name="full_name"
             type="text"
             placeholder="full name"
+            minLength={4}
+            maxLength={38}
           />
 
-          <Input required name="username" type="text" placeholder="username" />
+          <Input
+            required
+            name="username"
+            type="text"
+            placeholder="username"
+            maxLength={16}
+          />
 
           <Input
             required
             name="password"
             type="password"
             placeholder="password"
+            maxLength={32}
           />
 
           <div className="grid gap-y-2">

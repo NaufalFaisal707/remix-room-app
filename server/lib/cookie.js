@@ -1,4 +1,5 @@
 import { createCookie } from "@remix-run/node";
+import { getAccessExp, getRefreshExp } from "./jwt.js";
 
 let process;
 if (typeof window === "undefined") {
@@ -10,9 +11,12 @@ if (typeof window === "undefined") {
 const accessCookieName = "__access";
 const refreshCookieName = "__refresh";
 
-export const accessCookie = createCookie(accessCookieName);
+export const accessCookie = createCookie(accessCookieName, {
+  maxAge: getAccessExp(),
+});
 
 export const refreshCookie = createCookie(refreshCookieName, {
+  maxAge: getRefreshExp(),
   sameSite: "lax",
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",

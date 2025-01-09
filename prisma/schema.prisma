@@ -12,6 +12,6 @@ model User {
   password   String    @db.VarChar(32)
   username   String    @unique @db.VarChar(16)
   created_at DateTime  @unique @default(now())
-  full_name  String?
+  full_name  String    @db.VarChar(38)
   logout_at  DateTime?
 }

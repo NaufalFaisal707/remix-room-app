@@ -17,7 +17,6 @@ import {
   verifyAccessToken,
   verifyRefreshToken,
 } from "./server/lib/jwt.js";
-import { isRefreshTokenAccessable } from "./server/lib/utils.js";
 
 // initial prisma client
 const prisma = new PrismaClient();
@@ -28,7 +27,7 @@ const viteDevServer =
     : await import("vite").then((vite) =>
         vite.createServer({
           server: { middlewareMode: true },
-        })
+        }),
       );
 
 const remixHandler = createRequestHandler({
@@ -71,7 +70,7 @@ if (viteDevServer) {
   // Vite fingerprints its assets so we can cache forever.
   app.use(
     "/assets",
-    express.static("build/client/assets", { immutable: true, maxAge: "1y" })
+    express.static("build/client/assets", { immutable: true, maxAge: "1y" }),
   );
 }
 
@@ -89,97 +88,64 @@ function clientConnection(socket) {
   });
 }
 
-io.engine.use(async (req, res, next) => {
-  const getAllCookie = req.headers.cookie;
+io.use(async (socket, next) => {
+  const getAllCookie = socket.handshake.headers.cookie;
 
   const verifiyedAccessCookie = verifyAccessToken(
-    await accessCookie.parse(getAllCookie)
+    await accessCookie.parse(getAllCookie),
   );
 
   if (verifiyedAccessCookie) {
-    req.user_id = verifiyedAccessCookie.value;
+    const findUniqueUser = await prisma.user.findUnique({
+      where: {
+        id: verifiyedAccessCookie.value,
+      },
+    });
+
+    socket.user_id = findUniqueUser.id;
+    socket.user_full_name = findUniqueUser.full_name;
     next();
     return;
   }
 
-  const verifiyedRefreshCookie = verifyRefreshToken(
-    await refreshCookie.parse(getAllCookie)
-  );
-
-  if (verifiyedRefreshCookie) {
-    const findUniqueUser = await prisma.user.findUnique({
-      where: {
-        id: verifiyedRefreshCookie.value,
-      },
-      select: {
-        id: true,
-        full_name: true,
-        created_at: true,
-        logout_at: true,
-      },
-    });
-
-    if (!findUniqueUser) {
-      throw Response.json(null, {
-        status: 404,
-        headers: [
-          ["Set-Cookie", await clearAccessCookie.serialize("")],
-          ["Set-Cookie", await clearRefreshCookie.serialize("")],
-        ],
-      });
-    }
-
-    if (
-      findUniqueUser?.logout_at &&
-      isRefreshTokenAccessable(
-        verifiyedRefreshCookie.iat,
-        findUniqueUser.logout_at
-      )
-    ) {
-      res.statusCode = 401;
-      res.setHeader("Set-Cookie", [
-        await clearAccessCookie.serialize(""),
-        await clearRefreshCookie.serialize(""),
-      ]);
-      res.end();
-    }
-
-    const gac = generateAccessToken(verifiyedRefreshCookie.value);
-
-    return Response.json(null, {
-      headers: {
-        "Set-Cookie": await accessCookie.serialize(gac),
-      },
-    });
-  }
-
-  res.statusCode = 401;
-  res.setHeader("Set-Cookie", [
-    await clearAccessCookie.serialize(""),
-    await clearRefreshCookie.serialize(""),
-  ]);
-  res.end();
+  next(new Error("woy!"));
 });
 
 // handle socket.io request
 io.on("connection", async (socket) => {
-  const user = socket.request.user_id;
-
-  const findUniqueUser = await prisma.user.findUnique({
-    where: {
-      id: user,
-    },
-    select: {
-      id: true,
-      full_name: true,
-      created_at: true,
-      logout_at: true,
-    },
-  });
-
   clientConnection(socket);
 
-  socket.emit("getMe", findUniqueUser);
+  socket.leave(socket.id);
+  socket.join(socket.user_id);
+
+  async function globalChatId() {
+    const allSockets = await io.fetchSockets();
+    const uniqueUsers = [
+      ...new Set(allSockets.map((socket) => socket.user_id)),
+    ];
+    return uniqueUsers.map((id) => {
+      const socket = allSockets.find((s) => s.user_id === id);
+      return {
+        chat_id: id,
+        user_full_name: socket.user_full_name,
+      };
+    });
+  }
+
+  socket.on("ping", () => {
+    console.log("client ping!");
+  });
+
+  socket.on("getAllChat", async () => {
+    socket.emit("getAllChat", await globalChatId());
+  });
+
+  io.emit("getAllChat", await globalChatId());
+
+  socket.on("disconnect", async () => {
+    io.emit("getAllChat", await globalChatId());
+  });
+
   // console.log(socket.handshake.headers.cookie);
 });
 
@@ -188,5 +154,5 @@ app.all("*", remixHandler);
 
 const port = process.env.PORT || 3000;
 httpServer.listen(port, () =>
-  console.log(`Express server listening at http://localhost:${port}`)
+  console.log(`Express server listening at http://localhost:${port}`),
 );

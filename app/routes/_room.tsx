@@ -1,12 +1,12 @@
-import { redirect } from "@remix-run/node";
+import { redirectDocument } from "@remix-run/node";
 import {
   ClientLoaderFunctionArgs,
-  Form,
   isRouteErrorResponse,
   Link,
+  Outlet,
   useRouteError,
 } from "@remix-run/react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Button } from "~/components/ui/button";
 import { useSocket } from "~/context";
 import { isRefreshTokenAccessable } from "~/lib/utils";
@@ -30,15 +30,29 @@ export const loader = async ({
   const getAllCookie = request.headers.get("Cookie");
 
   const verifiyedAccessCookie = verifyAccessToken(
-    await accessCookie.parse(getAllCookie)
+    await accessCookie.parse(getAllCookie),
   ) as unknown as { value: string };
 
   if (verifiyedAccessCookie) {
-    return Response.json(true);
+    return prisma.user
+      .findUnique({
+        where: {
+          id: verifiyedAccessCookie.value,
+        },
+        select: {
+          id: true,
+          full_name: true,
+          created_at: true,
+          logout_at: true,
+        },
+      })
+      .then((user) => {
+        return Response.json(user);
+      });
   }
 
   const verifiyedRefreshCookie = verifyRefreshToken(
-    await refreshCookie.parse(getAllCookie)
+    await refreshCookie.parse(getAllCookie),
   ) as unknown as { value: string; iat: number };
 
   if (verifiyedRefreshCookie) {
@@ -55,7 +69,7 @@ export const loader = async ({
     });
 
     if (!findUniqueUser) {
-      throw Response.json(null, {
+      return Response.json(null, {
         status: 404,
         headers: [
           ["Set-Cookie", await clearAccessCookie.serialize("")],
@@ -68,10 +82,10 @@ export const loader = async ({
       findUniqueUser?.logout_at &&
       isRefreshTokenAccessable(
         verifiyedRefreshCookie.iat,
-        findUniqueUser.logout_at
+        findUniqueUser.logout_at,
       )
     ) {
-      return redirect("/", {
+      return redirectDocument("/", {
         headers: [
           ["Set-Cookie", await clearAccessCookie.serialize("")],
           ["Set-Cookie", await clearRefreshCookie.serialize("")],
@@ -81,7 +95,7 @@ export const loader = async ({
 
     const gac = generateAccessToken(verifiyedRefreshCookie.value);
 
-    return Response.json(null, {
+    return Response.json(findUniqueUser, {
       headers: {
         "Set-Cookie": await accessCookie.serialize(gac),
       },
@@ -110,27 +124,6 @@ export const clientLoader = async ({
   return cacheClientLoader;
 };
 
-const TemplateBelumLogin = () => {
-  return (
-    <div className="grid place-content-center h-svh">
-      <Link to="/login">
-        <Button>Login</Button>
-      </Link>
-    </div>
-  );
-};
-
-const TemplateSudahLogin = ({ loaderData }: { loaderData: unknown }) => {
-  return (
-    <div className="grid place-content-center h-svh">
-      <p>{JSON.stringify(loaderData)}</p>
-      <Form action="/logout" method="POST">
-        <Button>Logout</Button>
-      </Form>
-    </div>
-  );
-};
-
 export const ErrorBoundary = () => {
   const error = useRouteError();
   const socket = useSocket();
@@ -138,7 +131,7 @@ export const ErrorBoundary = () => {
   useEffect(() => {
     if (!socket) return;
 
-    socket.disconnect();
+    socket.close();
   }, [socket]);
 
   if (isRouteErrorResponse(error)) {
@@ -151,7 +144,13 @@ export const ErrorBoundary = () => {
     //   </div>
     // );
 
-    return <TemplateBelumLogin />;
+    return (
+      <div className="grid h-svh place-content-center">
+        <Link to="/login">
+          <Button>Login</Button>
+        </Link>
+      </div>
+    );
   } else if (error instanceof Error) {
     return (
       <div>
@@ -166,24 +165,6 @@ export const ErrorBoundary = () => {
   }
 };
 
-export default function Index() {
-  const [loaderSocket, setLoaderSocket] = useState(null);
-
-  const socket = useSocket();
-
-  useEffect(() => {
-    if (!socket) return;
-
-    socket.connect();
-
-    socket.on("getMe", (me) => {
-      setLoaderSocket(me);
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [socket]);
-
-  return <TemplateSudahLogin loaderData={loaderSocket} />;
+export default function Room() {
+  return <Outlet />;
 }

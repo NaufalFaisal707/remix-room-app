@@ -9,52 +9,72 @@ if (typeof window === "undefined") {
   process = { env: {} };
 }
 
+/**
+ * Retrieves the JWT session secret from environment variables.
+ * @returns {string} The JWT session secret.
+ * @throws {Error} If JWT_SESSION_SECRET is not set in .env file.
+ */
 function getAccessSecret() {
   if (
     !process.env.JWT_SESSION_SECRET ||
     process.env.JWT_SESSION_SECRET.length === 0
   ) {
     throw new Error(
-      "JWT_SESSION_SECRET belum diatur dalam file .env. Harap tambahkan JWT_SESSION_SECRET=your_secret_key pada file .env"
+      "JWT_SESSION_SECRET belum diatur dalam file .env. Harap tambahkan JWT_SESSION_SECRET=your_secret_key pada file .env",
     );
   }
 
   return process.env.JWT_SESSION_SECRET;
 }
 
-function getAccessExp() {
+/**
+ * Retrieves the JWT session expiration time from environment variables.
+ * @returns {string} The JWT session expiration time.
+ * @throws {Error} If JWT_SESSION_EXP is not set in .env file.
+ */
+export function getAccessExp() {
   if (
     !process.env.JWT_SESSION_EXP ||
     process.env.JWT_SESSION_EXP.length === 0
   ) {
     throw new Error(
-      "JWT_SESSION_EXP belum diatur dalam file .env. Harap tambahkan JWT_SESSION_EXP=15m pada file .env"
+      "JWT_SESSION_EXP belum diatur dalam file .env. Harap tambahkan JWT_SESSION_EXP=15m pada file .env",
     );
   }
 
   return process.env.JWT_SESSION_EXP;
 }
 
+/**
+ * Retrieves the JWT refresh token secret from environment variables.
+ * @returns {string} The JWT refresh token secret.
+ * @throws {Error} If JWT_REFRESH_SECRET is not set in .env file.
+ */
 function getRefreshSecret() {
   if (
     !process.env.JWT_REFRESH_SECRET ||
     process.env.JWT_REFRESH_SECRET.length === 0
   ) {
     throw new Error(
-      "JWT_REFRESH_SECRET belum diatur dalam file .env. Harap tambahkan JWT_REFRESH_SECRET=your_secret_key pada file .env"
+      "JWT_REFRESH_SECRET belum diatur dalam file .env. Harap tambahkan JWT_REFRESH_SECRET=your_secret_key pada file .env",
     );
   }
 
   return process.env.JWT_REFRESH_SECRET;
 }
 
-function getRefreshExp() {
+/**
+ * Retrieves the JWT refresh token expiration time from environment variables.
+ * @returns {string} The JWT refresh token expiration time.
+ * @throws {Error} If JWT_REFRESH_EXP is not set in .env file.
+ */
+export function getRefreshExp() {
   if (
     !process.env.JWT_REFRESH_EXP ||
     process.env.JWT_REFRESH_EXP.length === 0
   ) {
     throw new Error(
-      "JWT_REFRESH_EXP belum diatur dalam file .env. Harap tambahkan JWT_REFRESH_EXP=7d pada file .env"
+      "JWT_REFRESH_EXP belum diatur dalam file .env. Harap tambahkan JWT_REFRESH_EXP=7d pada file .env",
     );
   }
 

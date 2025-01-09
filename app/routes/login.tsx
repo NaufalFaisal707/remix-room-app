@@ -23,7 +23,7 @@ export const action = async ({
   } = context;
 
   const { username, password } = Object.fromEntries(
-    await request.formData()
+    await request.formData(),
   ) as {
     username: string;
     password: string;
@@ -32,14 +32,20 @@ export const action = async ({
   const findUniqueUser = await prisma.user.findUnique({
     where: {
       username,
-      password,
     },
   });
 
   if (!findUniqueUser) {
     throw Response.json(null, {
+      status: 404,
+      statusText: "akun tidak ditemukan",
+    });
+  }
+
+  if (!findUniqueUser.password.includes(password)) {
+    throw Response.json(null, {
       status: 401,
-      statusText: "harap periksa kembali username dan password",
+      statusText: "password salah",
     });
   }
 
@@ -60,7 +66,7 @@ const LoginTemplate = ({
   error?: { title: string; message: string };
 }) => {
   return (
-    <div className="grid place-content-center h-svh gap-y-4">
+    <div className="grid h-svh place-content-center gap-y-4">
       {error && (
         <Alert variant="destructive">
           <AlertTitle>{error.title}</AlertTitle>
@@ -68,15 +74,23 @@ const LoginTemplate = ({
         </Alert>
       )}
 
-      <div className="border p-4 rounded-md space-y-4">
+      <div className="space-y-4 rounded-md border p-4">
         <h1 className="text-lg">Silahkan login</h1>
         <Form method="POST" className="space-y-4">
-          <Input required name="username" type="text" placeholder="username" />
+          <Input
+            required
+            name="username"
+            type="text"
+            placeholder="username"
+            maxLength={16}
+          />
+
           <Input
             required
             name="password"
             type="password"
             placeholder="password"
+            maxLength={32}
           />
 
           <div className="grid gap-y-2">

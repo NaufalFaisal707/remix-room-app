@@ -1,18 +1,20 @@
 {
-  "name": "belajar-auth-prisma-remix",
+  "name": "remix-room-app",
   "private": true,
   "sideEffects": false,
   "type": "module",
   "scripts": {
     "build": "remix vite:build",
     "build:prod": "remix vite:build --config vite.prod.config.js",
-    "dev": "nodemon ./server.js --watch ./server.js",
+    "dev": "nodemon ./server.js --watch ./server.js --watch ./server/**/*.js",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "start": "cross-env NODE_ENV=production node ./server.js",
     "typecheck": "tsc"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",
+    "@radix-ui/react-dialog": "^1.1.4",
+    "@radix-ui/react-scroll-area": "^1.2.2",
     "@radix-ui/react-slot": "^1.1.1",
     "@remix-run/express": "^2.15.2",
     "@remix-run/node": "^2.15.2",
@@ -53,6 +55,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "nodemon": "^3.1.9",
     "postcss": "^8.4.38",
+    "prettier-plugin-tailwindcss": "^0.6.9",
     "tailwindcss": "^3.4.4",
     "typescript": "^5.1.6",
     "vite": "^5.1.0",
