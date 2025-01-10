@@ -132,12 +132,12 @@ io.on("connection", async (socket) => {
     });
   }
 
-  socket.on("ping", () => {
-    console.log("client ping!");
-  });
+  socket.on("sendMessage", (data) => {
+    const { target } = data;
 
-  socket.on("getAllChat", async () => {
-    socket.emit("getAllChat", await globalChatId());
+    socket.emit("getMessage", data);
+    socket.to(target).emit("getMessage", data);
+    socket.to(target).emit("getNotify", data);
   });
 
   io.emit("getAllChat", await globalChatId());
@@ -145,8 +145,6 @@ io.on("connection", async (socket) => {
   socket.on("disconnect", async () => {
     io.emit("getAllChat", await globalChatId());
   });
-
-  // console.log(socket.handshake.headers.cookie);
 });
 
 // handle SSR requests

@@ -8,11 +8,11 @@ import {
   Unplug,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useRouteLoaderData } from "react-router";
+import { useNavigate, useRouteLoaderData } from "react-router";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { ScrollArea } from "~/components/ui/scroll-area";
-import { useSocket } from "~/context";
+import { Message, useChat, useSocket } from "~/context";
 import {
   Sheet,
   SheetContent,
@@ -22,49 +22,52 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "~/components/ui/sheet";
+import { toast } from "sonner";
 
 export default function Index() {
-  const loaderData = useRouteLoaderData("routes/_room") as {
+  const routeLoaderData = useRouteLoaderData("routes/_room") as {
     id: string;
     full_name: string;
     created_at: string;
     logout_at: string | null;
   };
 
+  const navigation = useNavigate();
+
   const [cariPengguna, setCariPengguna] = useState("");
 
-  const [chats, setChats] = useState<
-    {
-      chat_id: string;
-      user_full_name: string;
-    }[]
-  >([]);
-
-  function filterChats() {
-    if (cariPengguna) {
-      return chats.filter(
-        (f) =>
-          f.chat_id !== loaderData.id &&
-          f.user_full_name.toLowerCase().includes(cariPengguna.toLowerCase()),
-      );
-    }
-    return chats.filter((f) => f.chat_id !== loaderData.id);
-  }
-
+  const chats = useChat();
   const socket = useSocket();
 
   useEffect(() => {
     if (!socket) return;
 
-    socket.emit("getAllChat");
-    socket.on("getAllChat", setChats);
+    socket.on("getNotify", pushToast);
 
-    socket.connect();
-
+    function pushToast(data: Message) {
+      toast(chats.find((f) => f.chat_id === data.from)?.user_full_name, {
+        description: data.body_message,
+        action: {
+          label: "Balas",
+          onClick: () => navigation("/" + data.from),
+        },
+      });
+    }
     return () => {
-      socket.off("getAllChat", setChats);
+      socket.off("getNotify", pushToast);
     };
-  }, [socket]);
+  }, [chats, navigation, socket]);
+
+  function filterChats() {
+    if (cariPengguna) {
+      return chats.filter(
+        (f) =>
+          f.chat_id !== routeLoaderData.id &&
+          f.user_full_name.toLowerCase().includes(cariPengguna.toLowerCase()),
+      );
+    }
+    return chats.filter((f) => f.chat_id !== routeLoaderData.id);
+  }
 
   const SheetMenu = (
     <Sheet>
@@ -103,8 +106,8 @@ export default function Index() {
       <div className="flex w-full gap-2 md:w-fit">
         <Input
           onChange={({ target }) => setCariPengguna(target.value)}
-          title="cari pengguna"
-          placeholder="Cari pengguna"
+          title={"cari pengguna (" + filterChats().length + " Aktif)"}
+          placeholder={"Cari pengguna (" + filterChats().length + " Aktif)"}
           type="search"
         />
 
@@ -177,15 +180,4 @@ export default function Index() {
       <ActiveChats />
     </div>
   );
-
-  // return (
-  //   <div className="grid place-content-center h-svh">
-  //     <p>{JSON.stringify(loaderData)}</p>
-  //     <p>{JSON.stringify(chats)}</p>
-  //     <div className="flex gap-2">
-
-  //       <Button onClick={sendPing}>Send Ping</Button>
-  //     </div>
-  //   </div>
-  // );
 }

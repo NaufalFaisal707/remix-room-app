@@ -6,9 +6,9 @@ import {
   Outlet,
   useRouteError,
 } from "@remix-run/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
-import { useSocket } from "~/context";
+import { ChatProvider, MessageProvider, useSocket } from "~/context";
 import { isRefreshTokenAccessable } from "~/lib/utils";
 import { CustomLoaderFunctionArgs } from "~/types";
 
@@ -166,5 +166,51 @@ export const ErrorBoundary = () => {
 };
 
 export default function Room() {
-  return <Outlet />;
+  const socket = useSocket();
+
+  const [chats, setChats] = useState<
+    {
+      chat_id: string;
+      user_full_name: string;
+    }[]
+  >([]);
+
+  const [message, setMessage] = useState<{
+    target: string;
+    from: string;
+    body_message: string;
+    date_time: number;
+  }>();
+
+  function pushMessage(data: {
+    target: string;
+    from: string;
+    body_message: string;
+    date_time: number;
+  }) {
+    setMessage(data);
+  }
+
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.connect();
+
+    socket.on("getAllChat", setChats);
+
+    socket.on("getMessage", pushMessage);
+
+    return () => {
+      socket.off("getAllChat", setChats);
+      socket.off("getMessage", pushMessage);
+    };
+  }, [socket]);
+
+  return (
+    <ChatProvider chat={chats}>
+      <MessageProvider message={message}>
+        <Outlet />
+      </MessageProvider>
+    </ChatProvider>
+  );
 }
