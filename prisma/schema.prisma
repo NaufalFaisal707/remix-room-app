@@ -9,9 +9,10 @@ datasource db {
 
 model User {
   id         String    @id @default(cuid())
-  password   String    @db.VarChar(32)
-  username   String    @unique @db.VarChar(16)
+  password   String
+  username   String    @unique @db.VarChar(24)
   created_at DateTime  @unique @default(now())
-  full_name  String    @db.VarChar(38)
+  full_name  String    @db.VarChar(48)
+  logout     Boolean   @default(false)
   logout_at  DateTime?
 }

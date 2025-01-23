@@ -17,9 +17,21 @@ import {
   verifyAccessToken,
   verifyRefreshToken,
 } from "./server/lib/jwt.js";
+import bcrypt from "bcryptjs";
+const { hash } = bcrypt;
 
 // initial prisma client
-const prisma = new PrismaClient();
+const prisma = new PrismaClient().$extends({
+  query: {
+    async $allOperations({ operation, args, model, query }) {
+      if (operation === "create" && model === "User" && args.data?.password) {
+        args.data.password = await hash(args.data.password, 10);
+        return query(args);
+      }
+      return await query(args);
+    },
+  },
+});
 
 const viteDevServer =
   process.env.NODE_ENV === "production"
@@ -80,7 +92,7 @@ app.use(express.static("build/client", { maxAge: "1h" }));
 
 app.use(morgan("tiny"));
 
-function clientConnection(socket) {
+function connectedClient(socket) {
   console.log(`client connected: ${socket.id}`);
 
   socket.on("disconnect", () => {
@@ -89,68 +101,64 @@ function clientConnection(socket) {
 }
 
 io.use(async (socket, next) => {
-  const getAllCookie = socket.handshake.headers.cookie;
+  next();
+  // const getAllCookie = socket.handshake.headers.cookie;
 
-  const verifiyedAccessCookie = verifyAccessToken(
-    await accessCookie.parse(getAllCookie),
-  );
+  // const verifiyedAccessCookie = verifyAccessToken(
+  //   await accessCookie.parse(getAllCookie),
+  // );
 
-  if (verifiyedAccessCookie) {
-    const findUniqueUser = await prisma.user.findUnique({
-      where: {
-        id: verifiyedAccessCookie.value,
-      },
-    });
+  // if (verifiyedAccessCookie) {
+  //   const findUniqueUser = await prisma.user.findUnique({
+  //     where: {
+  //       id: verifiyedAccessCookie.value,
+  //     },
+  //   });
 
-    socket.user_id = findUniqueUser.id;
-    socket.user_full_name = findUniqueUser.full_name;
-    next();
-    return;
-  }
+  //   socket.user_id = findUniqueUser.id;
+  //   socket.user_full_name = findUniqueUser.full_name;
+  //   next();
+  //   return;
+  // }
 
-  next(new Error("woy!"));
+  // next(new Error("woy!"));
 });
 
 // handle socket.io request
 io.on("connection", async (socket) => {
-  clientConnection(socket);
+  connectedClient(socket);
 
-  socket.leave(socket.id);
-  socket.join(socket.user_id);
-
-  async function globalChatId() {
-    const allSockets = await io.fetchSockets();
-    const uniqueUsers = [
-      ...new Set(allSockets.map((socket) => socket.user_id)),
-    ];
-    return uniqueUsers.map((id) => {
-      const socket = allSockets.find((s) => s.user_id === id);
-      return {
-        chat_id: id,
-        user_full_name: socket.user_full_name,
-      };
-    });
-  }
-
-  socket.on("sendMessage", (data) => {
-    const { target } = data;
-
-    socket.emit("getMessage", data);
-    socket.to(target).emit("getMessage", data);
-    socket.to(target).emit("getNotify", data);
-  });
-
-  io.emit("getAllChat", await globalChatId());
-
-  socket.on("disconnect", async () => {
-    io.emit("getAllChat", await globalChatId());
-  });
+  // socket.leave(socket.id);
+  // socket.join(socket.user_id);
+  // async function globalChatId() {
+  //   const allSockets = await io.fetchSockets();
+  //   const uniqueUsers = [
+  //     ...new Set(allSockets.map((socket) => socket.user_id)),
+  //   ];
+  //   return uniqueUsers.map((id) => {
+  //     const socket = allSockets.find((s) => s.user_id === id);
+  //     return {
+  //       chat_id: id,
+  //       user_full_name: socket.user_full_name,
+  //     };
+  //   });
+  // }
+  // socket.on("sendMessage", (data) => {
+  //   const { target } = data;
+  //   socket.emit("getMessage", data);
+  //   socket.to(target).emit("getMessage", data);
+  //   socket.to(target).emit("getNotify", data);
+  // });
+  // io.emit("getAllChat", await globalChatId());
+  // socket.on("disconnect", async () => {
+  //   io.emit("getAllChat", await globalChatId());
+  // });
 });
 
 // handle SSR requests
 app.all("*", remixHandler);
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 2453;
 httpServer.listen(port, () =>
   console.log(`Express server listening at http://localhost:${port}`),
 );

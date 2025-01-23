@@ -6,7 +6,7 @@
   "scripts": {
     "build": "remix vite:build",
     "build:prod": "remix vite:build --config vite.prod.config.js",
-    "dev": "nodemon ./server.js --watch ./server.js --watch ./server/**/*.js",
+    "dev": "nodemon ./server.js --watch ./server.js --watch ./server/*",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "start": "cross-env NODE_ENV=production node ./server.js",
     "typecheck": "tsc"
@@ -14,11 +14,13 @@
   "dependencies": {
     "@prisma/client": "^6.1.0",
     "@radix-ui/react-dialog": "^1.1.4",
+    "@radix-ui/react-label": "^2.1.1",
     "@radix-ui/react-scroll-area": "^1.2.2",
     "@radix-ui/react-slot": "^1.1.1",
     "@remix-run/express": "^2.15.2",
     "@remix-run/node": "^2.15.2",
     "@remix-run/react": "^2.15.2",
+    "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "compression": "^1.7.4",
@@ -29,7 +31,6 @@
     "lucide-react": "^0.469.0",
     "morgan": "^1.10.0",
     "next-themes": "^0.4.4",
-    "prisma": "^6.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "socket.io": "^4.8.1",
@@ -40,6 +41,7 @@
   },
   "devDependencies": {
     "@remix-run/dev": "^2.15.2",
+    "@types/bcryptjs": "^2.4.6",
     "@types/compression": "^1.7.5",
     "@types/express": "^4.17.20",
     "@types/jsonwebtoken": "^9.0.7",
@@ -58,6 +60,7 @@
     "nodemon": "^3.1.9",
     "postcss": "^8.4.38",
     "prettier-plugin-tailwindcss": "^0.6.9",
+    "prisma": "^6.2.1",
     "tailwindcss": "^3.4.4",
     "typescript": "^5.1.6",
     "vite": "^5.1.0",

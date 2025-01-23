@@ -1,20 +1,31 @@
 import {
+  ErrorResponse,
   Form,
   isRouteErrorResponse,
   Link,
-  redirect,
+  MetaFunction,
+  replace,
   useRouteError,
 } from "@remix-run/react";
-
-import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
+import { CircleX, Group } from "lucide-react";
+import ErrorInstance from "~/components/error-instance";
+import { Alert, AlertTitle, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { CustomActionFunctionArgs } from "~/types";
+
+export const meta: MetaFunction = () => [{ title: "Register | Room" }];
 
 export const action = async ({
   request,
   context,
 }: CustomActionFunctionArgs) => {
+  const formData = Object.fromEntries(await request.formData()) as {
+    full_name: string;
+    username: string;
+    password: string;
+  };
+
   const {
     prisma,
     generateAccessToken,
@@ -23,118 +34,114 @@ export const action = async ({
     refreshCookie,
   } = context;
 
-  const { username, password, full_name } = Object.fromEntries(
-    await request.formData(),
-  ) as {
-    full_name: string;
-    username: string;
-    password: string;
-  };
-
-  const findUniqueUser = await prisma.user.findUnique({
+  const findUserByUnique = await prisma.user.findUnique({
     where: {
-      username,
+      username: formData.username,
     },
   });
 
-  if (findUniqueUser) {
+  if (findUserByUnique) {
     throw Response.json(null, {
       status: 409,
       statusText: "username sudah di gunakan",
     });
   }
 
-  const createdUser = await prisma.user.create({
-    data: {
-      full_name,
-      username,
-      password,
-    },
-  });
+  const createdUser = await prisma.user
+    .create({
+      data: {
+        ...formData,
+      },
+      select: {
+        id: true,
+      },
+    })
+    .catch(() => {
+      throw Response.json(null, { status: 500, statusText: "server crash" });
+    });
 
-  const gac = generateAccessToken(createdUser.id);
-  const grt = generateRefreshToken(createdUser.id);
+  const [gat, grt] = [
+    generateAccessToken(createdUser.id),
+    generateRefreshToken(createdUser.id),
+  ];
 
-  return redirect("/", {
+  return replace("/", {
+    status: 200,
     headers: [
-      ["Set-Cookie", await accessCookie.serialize(gac)],
+      ["Set-Cookie", await accessCookie.serialize(gat)],
       ["Set-Cookie", await refreshCookie.serialize(grt)],
     ],
   });
-};
-
-const RegisterTemplate = ({
-  error,
-}: {
-  error?: { title: string; message: string };
-}) => {
-  return (
-    <div className="grid h-svh place-content-center gap-y-4">
-      {error && (
-        <Alert variant="destructive">
-          <AlertTitle>{error.title}</AlertTitle>
-          <AlertDescription>{error.message}</AlertDescription>
-        </Alert>
-      )}
-
-      <div className="space-y-4 rounded-md border p-4">
-        <h1 className="text-lg">Silahkan register</h1>
-        <Form method="POST" className="space-y-4">
-          <Input
-            required
-            name="full_name"
-            type="text"
-            placeholder="full name"
-            minLength={4}
-            maxLength={38}
-          />
-
-          <Input
-            required
-            name="username"
-            type="text"
-            placeholder="username"
-            maxLength={16}
-          />
-
-          <Input
-            required
-            name="password"
-            type="password"
-            placeholder="password"
-            maxLength={32}
-          />
-
-          <div className="grid gap-y-2">
-            <Button type="submit">Buat Akun</Button>
-            <Button type="button" variant="outline" asChild>
-              <Link to="/login">Login</Link>
-            </Button>
-          </div>
-        </Form>
-      </div>
-    </div>
-  );
 };
 
 export const ErrorBoundary = () => {
   const error = useRouteError();
 
   if (isRouteErrorResponse(error)) {
-    return (
-      <RegisterTemplate
-        error={{ title: error.status + "", message: error.statusText }}
-      />
-    );
-  } else if (error instanceof Error) {
-    return (
-      <RegisterTemplate error={{ title: "Error!", message: error.message }} />
-    );
-  } else {
-    <RegisterTemplate />;
+    return <RegisterComponent error={error} />;
   }
+
+  return <ErrorInstance error={error} />;
 };
 
-export default function AuthRegister() {
-  return <RegisterTemplate />;
+export default function Register() {
+  return <RegisterComponent />;
 }
+
+const RegisterComponent = ({ error }: { error?: ErrorResponse }) => (
+  <div className="grid h-svh place-content-center">
+    <div className="m-4">
+      <div className="mx-auto my-4 grid text-center">
+        <Group className="mx-auto my-4 size-10" />
+        <h1 className="text-lg font-semibold">Selamat Datang Di Room</h1>
+        <p className="text-sm text-neutral-400">
+          Silahkan Daftar untuk melanjutkan
+        </p>
+      </div>
+
+      {!!error && (
+        <Alert className="mb-4">
+          <CircleX className="h-4 w-4" />
+          <AlertTitle>{error?.status}</AlertTitle>
+          <AlertDescription>{error?.statusText}</AlertDescription>
+        </Alert>
+      )}
+
+      <Form method="POST" className="space-y-4">
+        <Input
+          required
+          name="full_name"
+          type="text"
+          placeholder="nama akun"
+          maxLength={48}
+          minLength={4}
+        />
+
+        <Input
+          required
+          name="username"
+          type="text"
+          placeholder="username"
+          maxLength={24}
+          minLength={4}
+        />
+
+        <Input
+          required
+          name="password"
+          type="password"
+          placeholder="password"
+          maxLength={32}
+          minLength={4}
+        />
+
+        <div className="grid gap-y-2">
+          <Button type="submit">Daftarkan Akun</Button>
+          <Button type="button" variant="outline" asChild>
+            <Link to="/login">Masuk</Link>
+          </Button>
+        </div>
+      </Form>
+    </div>
+  </div>
+);

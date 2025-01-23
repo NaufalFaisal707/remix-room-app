@@ -8,8 +8,8 @@ if (typeof window === "undefined") {
   process = { env: {} };
 }
 
-const accessCookieName = "__access";
-const refreshCookieName = "__refresh";
+const accessCookieName = "__r_a";
+const refreshCookieName = "__r_r";
 
 export const accessCookie = createCookie(accessCookieName, {
   maxAge: getAccessExp(),
