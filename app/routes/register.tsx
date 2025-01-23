@@ -4,9 +4,9 @@ import {
   isRouteErrorResponse,
   Link,
   MetaFunction,
-  replace,
   useRouteError,
 } from "@remix-run/react";
+import { replace } from "@remix-run/node";
 import { CircleX, Group } from "lucide-react";
 import ErrorInstance from "~/components/error-instance";
 import { Alert, AlertTitle, AlertDescription } from "~/components/ui/alert";
@@ -20,12 +20,6 @@ export const action = async ({
   request,
   context,
 }: CustomActionFunctionArgs) => {
-  const formData = Object.fromEntries(await request.formData()) as {
-    full_name: string;
-    username: string;
-    password: string;
-  };
-
   const {
     prisma,
     generateAccessToken,
@@ -33,6 +27,12 @@ export const action = async ({
     accessCookie,
     refreshCookie,
   } = context;
+
+  const formData = Object.fromEntries(await request.formData()) as {
+    full_name: string;
+    username: string;
+    password: string;
+  };
 
   const findUserByUnique = await prisma.user.findUnique({
     where: {
@@ -60,13 +60,10 @@ export const action = async ({
       throw Response.json(null, { status: 500, statusText: "server crash" });
     });
 
-  const [gat, grt] = [
-    generateAccessToken(createdUser.id),
-    generateRefreshToken(createdUser.id),
-  ];
+  const gat = generateAccessToken(createdUser.id);
+  const grt = generateRefreshToken(createdUser.id);
 
   return replace("/", {
-    status: 200,
     headers: [
       ["Set-Cookie", await accessCookie.serialize(gat)],
       ["Set-Cookie", await refreshCookie.serialize(grt)],

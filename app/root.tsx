@@ -6,14 +6,17 @@ import {
   ScrollRestoration,
 } from "@remix-run/react";
 import type { LinksFunction } from "@remix-run/node";
-
-import "./tailwind.css";
+import tailwind from "./tailwind.css?url";
 import { useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { SocketProvider } from "./context";
 import { Toaster } from "./components/ui/sonner";
 
 export const links: LinksFunction = () => [
+  {
+    rel: "stylesheet",
+    href: tailwind,
+  },
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
     rel: "preconnect",
