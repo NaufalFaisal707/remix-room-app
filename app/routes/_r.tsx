@@ -1,6 +1,8 @@
 import { Outlet, useLoaderData } from "@remix-run/react";
 import { redirect, replace } from "@remix-run/node";
 import { CustomLoaderFunctionArgs } from "~/types";
+import { UserProvider, useSocket } from "~/context";
+import { useEffect } from "react";
 
 export const loader = async ({
   request,
@@ -93,6 +95,17 @@ export const loader = async ({
 export default function Room() {
   const loaderData = useLoaderData<typeof loader>();
 
-  console.log(loaderData);
-  return <Outlet />;
+  const socket = useSocket();
+
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.connect();
+  }, [socket]);
+
+  return (
+    <UserProvider user={loaderData}>
+      <Outlet />
+    </UserProvider>
+  );
 }
