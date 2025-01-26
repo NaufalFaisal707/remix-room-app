@@ -82,12 +82,15 @@ export function getRefreshExp() {
 }
 
 /**
- * Generates an access token with the provided value.
- * @param {string} value - The value to be encoded in the token.
+ * Generates an access token with the provided user data.
+ * @param {string} id - The user ID
+ * @param {string} full_name - The user's full name
  * @returns {string} The generated access token.
  */
-export function generateAccessToken(value) {
-  return sign({ value }, getAccessSecret(), { expiresIn: getAccessExp() });
+export function generateAccessToken(id, full_name) {
+  return sign({ id, full_name }, getAccessSecret(), {
+    expiresIn: getAccessExp(),
+  });
 }
 
 /**
@@ -104,12 +107,15 @@ export function verifyAccessToken(token) {
 }
 
 /**
- * Generates a refresh token with the provided value.
- * @param {string} value - The value to be encoded in the token.
+ * Generates a refresh token with the provided user data.
+ * @param {string} id - The user ID
+ * @param {string} full_name - The user's full name
  * @returns {string} The generated refresh token.
  */
-export function generateRefreshToken(value) {
-  return sign({ value }, getRefreshSecret(), { expiresIn: getRefreshExp() });
+export function generateRefreshToken(id, full_name) {
+  return sign({ id, full_name }, getRefreshSecret(), {
+    expiresIn: getRefreshExp(),
+  });
 }
 
 /**
