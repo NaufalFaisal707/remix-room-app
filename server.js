@@ -54,7 +54,7 @@ const remixHandler = createRequestHandler({
       clearAccessCookie,
       clearRefreshCookie,
 
-      // jawir token configuration
+      // jwt token configuration
       generateAccessToken,
       generateRefreshToken,
       verifyAccessToken,
