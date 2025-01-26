@@ -119,18 +119,14 @@ io.use(async (socket, next) => {
 io.on("connection", async (socket) => {
   connectedClient(socket);
 
-  socket.leave(socket.id);
+  async function fetchOnlineUsers() {
+    return (await io.fetchSockets()).map(({ uid, uname }) => ({
+      uid,
+      uname,
+    }));
+  }
 
-  socket.join("global-room");
-
-  console.log(socket.rooms);
-
-  const onlineUsers = (await io.fetchSockets()).map(({ uid, uname }) => ({
-    uid,
-    uname,
-  }));
-
-  console.log(onlineUsers);
+  console.log(await fetchOnlineUsers());
 
   // async function globalChatId() {
   //   const allSockets = await io.fetchSockets();
@@ -151,10 +147,14 @@ io.on("connection", async (socket) => {
   //   socket.to(target).emit("getMessage", data);
   //   socket.to(target).emit("getNotify", data);
   // });
-  // io.emit("getAllChat", await globalChatId());
-  // socket.on("disconnect", async () => {
-  //   io.emit("getAllChat", await globalChatId());
-  // });
+
+  io.emit("getOnlineUsers", await fetchOnlineUsers());
+  io.emit("newUserJoin", socket.uname);
+
+  socket.on("disconnect", async () => {
+    io.emit("getOnlineUsers", await fetchOnlineUsers());
+    io.emit("newUserLeave", socket.uname);
+  });
 });
 
 // handle SSR requests

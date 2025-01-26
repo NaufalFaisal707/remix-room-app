@@ -15,4 +15,16 @@ model User {
   full_name  String    @db.VarChar(48)
   logout     Boolean   @default(false)
   logout_at  DateTime?
+  messages   Message[]
+}
+
+model Message {
+  id         String    @id @default(cuid())
+  from       User      @relation(fields: [from_id], references: [id])
+  from_id     String    @unique
+  message_body String
+  reply_to_message Message? @relation("ReplyToMessage", fields: [reply_to_message_id], references: [id])
+  reply_to_message_id String? @unique
+  replies Message[] @relation("ReplyToMessage")
+  created_at DateTime  @unique @default(now())
 }
