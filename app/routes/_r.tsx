@@ -25,12 +25,10 @@ export const loader = async ({
   const rcp = verifyRefreshToken(await refreshCookie.parse(getAllCookies));
 
   if (acp) {
-    const { value } = acp as { value: string };
+    const { id } = acp as { id: string };
 
     const findUserByUnique = await prisma.user.findUnique({
-      where: {
-        id: value,
-      },
+      where: { id },
       select: {
         full_name: true,
         logout: true,
@@ -52,12 +50,10 @@ export const loader = async ({
   }
 
   if (rcp) {
-    const { value } = rcp as { value: string };
+    const { id } = rcp as { id: string };
 
     const findUserByUnique = await prisma.user.findUnique({
-      where: {
-        id: value,
-      },
+      where: { id },
       select: {
         full_name: true,
         logout: true,
@@ -75,7 +71,7 @@ export const loader = async ({
       });
     }
 
-    const gat = generateAccessToken(value);
+    const gat = generateAccessToken(id, findUserByUnique.full_name);
 
     return Response.json(findUserByUnique, {
       headers: {

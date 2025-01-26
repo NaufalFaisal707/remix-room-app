@@ -54,14 +54,15 @@ export const action = async ({
       },
       select: {
         id: true,
+        full_name: true,
       },
     })
     .catch(() => {
       throw Response.json(null, { status: 500, statusText: "server crash" });
     });
 
-  const gat = generateAccessToken(createdUser.id);
-  const grt = generateRefreshToken(createdUser.id);
+  const gat = generateAccessToken(createdUser.id, createdUser.full_name);
+  const grt = generateRefreshToken(createdUser.id, createdUser.full_name);
 
   return replace("/", {
     headers: [

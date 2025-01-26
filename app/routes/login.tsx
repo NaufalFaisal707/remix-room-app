@@ -41,6 +41,7 @@ export const action = async ({
     },
     select: {
       id: true,
+      full_name: true,
       password: true,
     },
   });
@@ -64,8 +65,14 @@ export const action = async ({
     });
   }
 
-  const gat = generateAccessToken(findUserByUnique.id);
-  const grt = generateRefreshToken(findUserByUnique.id);
+  const gat = generateAccessToken(
+    findUserByUnique.id,
+    findUserByUnique.full_name,
+  );
+  const grt = generateRefreshToken(
+    findUserByUnique.id,
+    findUserByUnique.full_name,
+  );
 
   return replace("/", {
     headers: [

@@ -101,35 +101,37 @@ function connectedClient(socket) {
 }
 
 io.use(async (socket, next) => {
-  next();
-  // const getAllCookie = socket.handshake.headers.cookie;
+  const { cookie } = socket.handshake.headers;
 
-  // const verifiyedAccessCookie = verifyAccessToken(
-  //   await accessCookie.parse(getAllCookie),
-  // );
+  const acp = verifyAccessToken(await accessCookie.parse(cookie));
 
-  // if (verifiyedAccessCookie) {
-  //   const findUniqueUser = await prisma.user.findUnique({
-  //     where: {
-  //       id: verifiyedAccessCookie.value,
-  //     },
-  //   });
+  if (acp) {
+    socket.uid = acp.id;
+    socket.uname = acp.full_name;
 
-  //   socket.user_id = findUniqueUser.id;
-  //   socket.user_full_name = findUniqueUser.full_name;
-  //   next();
-  //   return;
-  // }
+    next();
+  }
 
-  // next(new Error("woy!"));
+  next(new Error("gk boleh!"));
 });
 
 // handle socket.io request
 io.on("connection", async (socket) => {
   connectedClient(socket);
 
-  // socket.leave(socket.id);
-  // socket.join(socket.user_id);
+  socket.leave(socket.id);
+
+  socket.join("global-room");
+
+  console.log(socket.rooms);
+
+  const onlineUsers = (await io.fetchSockets()).map(({ uid, uname }) => ({
+    uid,
+    uname,
+  }));
+
+  console.log(onlineUsers);
+
   // async function globalChatId() {
   //   const allSockets = await io.fetchSockets();
   //   const uniqueUsers = [

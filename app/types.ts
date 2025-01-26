@@ -12,8 +12,8 @@ type CustomContext = {
     refreshCookie: Cookie;
     clearAccessCookie: Cookie;
     clearRefreshCookie: Cookie;
-    generateAccessToken: (value: string) => string;
-    generateRefreshToken: (value: string) => string;
+    generateAccessToken: (value: string, full_name: string) => string;
+    generateRefreshToken: (value: string, full_name: string) => string;
     verifyAccessToken: (token: string) => object | null;
     verifyRefreshToken: (token: string) => object | null;
   };
