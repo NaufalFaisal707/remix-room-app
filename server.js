@@ -94,9 +94,11 @@ app.use(morgan("tiny"));
 
 function connectedClient(socket) {
   console.log(`client connected: ${socket.id}`);
+  io.emit("newUserJoin", socket.uname);
 
   socket.on("disconnect", () => {
     console.log(`client disconnected: ${socket.id}`);
+    io.emit("newUserLeave", socket.uname);
   });
 }
 
@@ -110,6 +112,7 @@ io.use(async (socket, next) => {
     socket.uname = acp.full_name;
 
     next();
+    return;
   }
 
   next(new Error("gk boleh!"));
@@ -119,28 +122,27 @@ io.use(async (socket, next) => {
 io.on("connection", async (socket) => {
   connectedClient(socket);
 
+  // get online users with multipe connection bloker
   async function fetchOnlineUsers() {
-    return (await io.fetchSockets()).map(({ uid, uname }) => ({
+    let cstate;
+
+    const onlineUsers = await io.fetchSockets();
+
+    onlineUsers.forEach((fe, i) => {
+      if (fe.uid === cstate) {
+        fe.disconnect();
+        onlineUsers.splice(i, 1);
+      }
+
+      cstate = fe.uid;
+    });
+
+    return onlineUsers.map(({ uid, uname }) => ({
       uid,
       uname,
     }));
   }
 
-  console.log(await fetchOnlineUsers());
-
-  // async function globalChatId() {
-  //   const allSockets = await io.fetchSockets();
-  //   const uniqueUsers = [
-  //     ...new Set(allSockets.map((socket) => socket.user_id)),
-  //   ];
-  //   return uniqueUsers.map((id) => {
-  //     const socket = allSockets.find((s) => s.user_id === id);
-  //     return {
-  //       chat_id: id,
-  //       user_full_name: socket.user_full_name,
-  //     };
-  //   });
-  // }
   // socket.on("sendMessage", (data) => {
   //   const { target } = data;
   //   socket.emit("getMessage", data);
@@ -149,11 +151,9 @@ io.on("connection", async (socket) => {
   // });
 
   io.emit("getOnlineUsers", await fetchOnlineUsers());
-  io.emit("newUserJoin", socket.uname);
 
   socket.on("disconnect", async () => {
     io.emit("getOnlineUsers", await fetchOnlineUsers());
-    io.emit("newUserLeave", socket.uname);
   });
 });
 
