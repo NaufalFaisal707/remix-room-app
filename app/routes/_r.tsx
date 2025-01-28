@@ -30,6 +30,7 @@ export const loader = async ({
     const findUserByUnique = await prisma.user.findUnique({
       where: { id },
       select: {
+        id: true,
         full_name: true,
         logout: true,
         created_at: true,
@@ -55,6 +56,7 @@ export const loader = async ({
     const findUserByUnique = await prisma.user.findUnique({
       where: { id },
       select: {
+        id: true,
         full_name: true,
         logout: true,
         created_at: true,

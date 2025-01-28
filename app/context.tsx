@@ -20,6 +20,7 @@ export function SocketProvider({ socket, children }: SocketProviderProps) {
 }
 
 type User = {
+  id: string;
   full_name: string;
   logout: boolean;
   create_at: Date;

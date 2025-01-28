@@ -94,11 +94,19 @@ app.use(morgan("tiny"));
 
 function connectedClient(socket) {
   console.log(`client connected: ${socket.id}`);
-  io.emit("newUserJoin", socket.uname);
+  io.emit("newUserJoin", {
+    type: "badge",
+    uname: socket.uname,
+    status: "join",
+  });
 
   socket.on("disconnect", () => {
     console.log(`client disconnected: ${socket.id}`);
-    io.emit("newUserLeave", socket.uname);
+    io.emit("newUserLeave", {
+      type: "badge",
+      uname: socket.uname,
+      status: "leave",
+    });
   });
 }
 
@@ -130,7 +138,7 @@ io.on("connection", async (socket) => {
 
     onlineUsers.forEach((fe, i) => {
       if (fe.uid === cstate) {
-        fe.disconnect();
+        fe.disconnect(true);
         onlineUsers.splice(i, 1);
       }
 
@@ -149,6 +157,10 @@ io.on("connection", async (socket) => {
   //   socket.to(target).emit("getMessage", data);
   //   socket.to(target).emit("getNotify", data);
   // });
+
+  socket.on("sendMessage", (message) => {
+    io.emit("newMessage", message);
+  });
 
   io.emit("getOnlineUsers", await fetchOnlineUsers());
 
