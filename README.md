@@ -5,7 +5,7 @@ Aplikasi chat sederhana untuk komunikasi antar pengguna
 
 ## Fitur
 - Realtime Chat
-- User Auth Whit JWT
+- User Auth With JWT
 - Send Broadcast Message
 - Reply Message
 
