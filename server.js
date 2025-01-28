@@ -45,7 +45,7 @@ const viteDevServer =
 const remixHandler = createRequestHandler({
   getLoadContext() {
     return {
-      // prisma configruato
+      // prisma configuration
       prisma,
 
       // cookie configruation
@@ -150,13 +150,6 @@ io.on("connection", async (socket) => {
       uname,
     }));
   }
-
-  // socket.on("sendMessage", (data) => {
-  //   const { target } = data;
-  //   socket.emit("getMessage", data);
-  //   socket.to(target).emit("getMessage", data);
-  //   socket.to(target).emit("getNotify", data);
-  // });
 
   socket.on("sendMessage", (message) => {
     io.emit("newMessage", message);

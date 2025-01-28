@@ -7,8 +7,8 @@
     "build": "remix vite:build",
     "build:prod": "remix vite:build --config vite.prod.config.js",
     "dev": "nodemon ./server.js --watch ./server.js --watch ./server/*",
-    "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "start": "cross-env NODE_ENV=production node ./server.js",
+    "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "typecheck": "tsc"
   },
   "dependencies": {
