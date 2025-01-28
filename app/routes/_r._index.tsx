@@ -1,5 +1,5 @@
 import { Form } from "@remix-run/react";
-import { Group, Send, User, X } from "lucide-react";
+import { Group, LogOut, Menu, Send, User, X } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import Container2xl from "~/components/container-2xl";
 import { Button } from "~/components/ui/button";
@@ -16,6 +16,13 @@ import {
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { Badge } from "~/components/ui/badge";
 import { cn } from "~/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 
 type User = {
   uid: string;
@@ -70,6 +77,49 @@ const DialogOnlineUsers = ({ users }: { users: User[] }) => (
     </DialogContent>
   </Dialog>
 );
+
+const DropdownMenuRoom = () => {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="icon">
+          <Menu />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuLabel>Menu</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DialogConfirmLogout />
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+const DialogConfirmLogout = () => {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="destructive" className="w-full">
+          <LogOut /> Keluar
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Keluar dari sesi ini?</DialogTitle>
+          <DialogDescription>
+            Data login sebelumnya akan di hapus
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form action="/logout" method="GET">
+          <Button variant="destructive" className="w-full">
+            Ya, Keluar Dari Sesi Ini
+          </Button>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 export default function RIndex() {
   const [onlineUsers, setOnlineUsers] = useState<User[]>([]);
@@ -161,11 +211,14 @@ export default function RIndex() {
           <span className="text-lg">Room</span>
         </div>
 
-        <DialogOnlineUsers users={onlineUsers} />
+        <div className="flex gap-4">
+          <DialogOnlineUsers users={onlineUsers} />
+          <DropdownMenuRoom />
+        </div>
       </nav>
 
       <div
-        className="m-4 flex grow flex-col gap-2 overflow-hidden hover:overflow-auto"
+        className="m-4 flex grow flex-col gap-2 overflow-auto"
         ref={scrollAreaRef}
       >
         {messages.map((m, key) => {
